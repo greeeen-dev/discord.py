@@ -1078,8 +1078,8 @@ class VocalGuildChannel(discord.abc.Messageable, discord.abc.Connectable, discor
         self.last_message_id: Optional[int] = utils._get_as_snowflake(data, 'last_message_id')
         self.position: int = data['position']
         self.slowmode_delay = data.get('rate_limit_per_user', 0)
-        self.bitrate: int = data['bitrate']
-        self.user_limit: int = data['user_limit']
+        self.bitrate: int = data.get('bitrate', 64)
+        self.user_limit: int = data.get('user_limit', 0)
         self._fill_overwrites(data)
 
     @property
