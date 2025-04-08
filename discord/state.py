@@ -1428,7 +1428,7 @@ class ConnectionState(Generic[ClientT]):
         if guild is None:
             return
 
-        members = [Member(guild=guild, data=member, state=self) for member in data.get('members', [])]
+        members = [Member(guild=guild, data=member, state=self) for member in data.get('members', []) if member.get('user')]
         _log.debug('Processed a chunk for %s members in guild ID %s.', len(members), guild_id)
 
         if presences:
