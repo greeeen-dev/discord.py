@@ -566,6 +566,11 @@ class DiscordWebSocket:
             data['__shard_id__'] = self.shard_id
             _log.info('Shard ID %s has successfully RESUMED session %s.', self.shard_id, self.session_id)
 
+        if event == 'GUILD_MEMBERS_CHUNK':
+            print(data['guild_id'], len(data['members']))
+            r = await self._connection.http.get_members(data['guild_id'], 10, 0)
+            print(r)
+
         try:
             func = self._discord_parsers[event]
         except KeyError:
@@ -655,10 +660,19 @@ class DiscordWebSocket:
         await self.socket.send_str(data)
 
     async def send(self, data: str, /) -> None:
+        _log.debug('Sending via Gateway: %s', data)
         await self._rate_limiter.block()
         await self.socket.send_str(data)
 
     async def send_as_json(self, data: Any) -> None:
+        _log.debug('Sending via Gateway: %s', data)
+
+        # Chunk members patch
+        if data['op'] == 8:
+            data['d']['guild_id'] = str(data['d']['guild_id'])
+            if not data['d']['query']:
+                data['d'].pop('query')
+        
         try:
             await self.send(utils._to_json(data))
         except RuntimeError as exc:
