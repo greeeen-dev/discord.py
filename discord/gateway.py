@@ -566,11 +566,6 @@ class DiscordWebSocket:
             data['__shard_id__'] = self.shard_id
             _log.info('Shard ID %s has successfully RESUMED session %s.', self.shard_id, self.session_id)
 
-        if event == 'GUILD_MEMBERS_CHUNK':
-            print(data['guild_id'], len(data['members']))
-            r = await self._connection.http.get_members(data['guild_id'], 10, 0)
-            print(r)
-
         try:
             func = self._discord_parsers[event]
         except KeyError:
