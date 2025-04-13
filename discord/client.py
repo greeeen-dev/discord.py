@@ -279,6 +279,9 @@ class Client:
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self.shard_id: Optional[int] = options.get('shard_id')
         self.shard_count: Optional[int] = options.get('shard_count')
+        self.http_endpoint: str = options.get('rest_url', 'https://api.old.server.spacebar.chat/api/v9')
+        self.cdn_endpoint: str = options.get('cdn_url', 'https://cdn.old.server.spacebar.chat')
+        self.ws_endpoint: str = options.get('gateway_url', 'wss://gateway.old.server.spacebar.chat')
 
         connector: Optional[aiohttp.BaseConnector] = options.get('connector', None)
         proxy: Optional[str] = options.pop('proxy', None)
@@ -294,6 +297,7 @@ class Client:
             unsync_clock=unsync_clock,
             http_trace=http_trace,
             max_ratelimit_timeout=max_ratelimit_timeout,
+            endpoint=self.http_endpoint
         )
 
         self._handlers: Dict[str, Callable[..., None]] = {
@@ -694,6 +698,7 @@ class Client:
         ws_params = {
             'initial': True,
             'shard_id': self.shard_id,
+            'endpoint': self.ws_endpoint
         }
         while not self.is_closed():
             try:
