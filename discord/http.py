@@ -302,13 +302,13 @@ def _set_api_version(value: int):
 class Route:
     BASE: ClassVar[str] = 'https://discord.com/api/v10'
 
-    def __init__(self, method: str, path: str, *, metadata: Optional[str] = None, **parameters: Any) -> None:
+    def __init__(self, method: str, path: str, *, metadata: Optional[str] = None, endpoint: Optional[str] = None, **parameters: Any) -> None:
         self.path: str = path
         self.method: str = method
         # Metadata is a special string used to differentiate between known sub rate limits
         # Since these can't be handled generically, this is the next best way to do so.
         self.metadata: Optional[str] = metadata
-        url = self.BASE + self.path
+        url = (endpoint or self.BASE) + self.path
         if parameters:
             url = url.format_map({k: _uriquote(v, safe='') if isinstance(v, str) else v for k, v in parameters.items()})
         self.url: str = url
