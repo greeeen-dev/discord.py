@@ -302,13 +302,14 @@ def _set_api_version(value: int):
 class Route:
     BASE: ClassVar[str] = 'https://discord.com/api/v10'
 
-    def __init__(self, method: str, path: str, *, metadata: Optional[str] = None, endpoint: Optional[str] = None, **parameters: Any) -> None:
+    def __init__(self, method: str, path: str, *, metadata: Optional[str] = None, **parameters: Any) -> None:
         self.path: str = path
         self.method: str = method
         # Metadata is a special string used to differentiate between known sub rate limits
         # Since these can't be handled generically, this is the next best way to do so.
         self.metadata: Optional[str] = metadata
-        url = (endpoint or self.BASE) + self.path
+        url = parameters.get('endpoint', self.BASE) + self.path
+        parameters.pop('endpoint') # Prevent issues when dealing with the rest of parameters
         if parameters:
             url = url.format_map({k: _uriquote(v, safe='') if isinstance(v, str) else v for k, v in parameters.items()})
         self.url: str = url
@@ -510,6 +511,7 @@ class HTTPClient:
         unsync_clock: bool = True,
         http_trace: Optional[aiohttp.TraceConfig] = None,
         max_ratelimit_timeout: Optional[float] = None,
+        endpoint: Optional[str] = None
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.connector: aiohttp.BaseConnector = connector or MISSING
@@ -530,9 +532,14 @@ class HTTPClient:
         self.http_trace: Optional[aiohttp.TraceConfig] = http_trace
         self.use_clock: bool = not unsync_clock
         self.max_ratelimit_timeout: Optional[float] = max(30.0, max_ratelimit_timeout) if max_ratelimit_timeout else None
+        self.endpoint: Optional[str] = endpoint
 
         user_agent = 'DiscordBot (https://github.com/Rapptz/discord.py {0}) Python/{1[0]}.{1[1]} aiohttp/{2}'
         self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
+
+    def build_route(self, *args, **kwargs) -> Route:
+        kwargs.update({'endpoint': self.endpoint})
+        return Route(*args, **kwargs)
 
     def clear(self) -> None:
         if self.__session and self.__session.closed:
